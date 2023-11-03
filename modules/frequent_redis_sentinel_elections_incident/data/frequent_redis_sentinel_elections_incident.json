@@ -1,0 +1,142 @@
+{
+  "name": "frequent_redis_sentinel_elections_incident",
+  "description": "This incident type refers to a situation where Redis Sentinel, a high-availability solution for Redis, experiences frequent elections. Elections happen when a new Sentinel is elected as the leader, responsible for managing Redis instances. Frequent elections can be a sign of network instability or misconfiguration, which can result in downtime or reduced performance. It is important to investigate the root cause of the frequent elections and take prompt action to prevent service disruption.",
+  "params": [
+    {
+      "name": "SENTINEL_HOST",
+      "value": ""
+    },
+    {
+      "name": "NEW_QUORUM_SIZE",
+      "value": ""
+    },
+    {
+      "name": "NEW_FAILOVER_TIMEOUT",
+      "value": ""
+    },
+    {
+      "name": "REDIS_INSTANCE_PORT",
+      "value": ""
+    },
+    {
+      "name": "SENTINEL_PORT",
+      "value": ""
+    },
+    {
+      "name": "PATH_TO_REDIS_CONF_FILE",
+      "value": ""
+    },
+    {
+      "name": "MASTER_NAME",
+      "value": ""
+    },
+    {
+      "name": "REDIS_INSTANCE_HOST",
+      "value": ""
+    },
+    {
+      "name": "HOST_NAME",
+      "value": ""
+    },
+    {
+      "name": "K8S_CLUSTER_NAME",
+      "value": ""
+    },
+    {
+      "name": "NAMESPACE",
+      "value": ""
+    }
+  ],
+  "cells": [
+    {
+      "name": "cell_1",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Frequent Redis Sentinel Elections Incident\nThis incident type refers to a situation where Redis Sentinel, a high-availability solution for Redis, experiences frequent elections. Elections happen when a new Sentinel is elected as the leader, responsible for managing Redis instances. Frequent elections can be a sign of network instability or misconfiguration, which can result in downtime or reduced performance. It is important to investigate the root cause of the frequent elections and take prompt action to prevent service disruption."
+    },
+    {
+      "name": "cell_2",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check if Redis Sentinel is running"
+    },
+    {
+      "name": "cell_3",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `systemctl status redis-sentinel`"
+    },
+    {
+      "name": "cell_4",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the current leader Sentinel"
+    },
+    {
+      "name": "cell_5",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `redis-cli -h ${SENTINEL_HOST} -p ${SENTINEL_PORT} SENTINEL get-master-addr-by-name ${MASTER_NAME}`"
+    },
+    {
+      "name": "cell_6",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the Sentinel log for election events"
+    },
+    {
+      "name": "cell_7",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `journalctl -u redis-sentinel | grep \"Elected leader\"`"
+    },
+    {
+      "name": "cell_8",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the network connectivity between Sentinels and Redis instances"
+    },
+    {
+      "name": "cell_9",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `ping ${REDIS_INSTANCE_HOST}`"
+    },
+    {
+      "name": "cell_10",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the Redis instance log for connection errors"
+    },
+    {
+      "name": "cell_11",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `journalctl -u redis | grep \"connection refused\"`"
+    },
+    {
+      "name": "cell_12",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the Redis instance configuration for Sentinel settings"
+    },
+    {
+      "name": "cell_13",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `redis-cli -h ${REDIS_INSTANCE_HOST} -p ${REDIS_INSTANCE_PORT} CONFIG GET sentinel`"
+    },
+    {
+      "name": "cell_14",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Adjust the quorum size or failover timeout settings to better suit the network conditions and workload demands."
+    },
+    {
+      "name": "cell_15",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_update_redis_conf($NEW_QUORUM_SIZE, $NEW_FAILOVER_TIMEOUT, $PATH_TO_REDIS_CONF_FILE)"
+    }
+  ]
+}
